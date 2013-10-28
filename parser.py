@@ -216,17 +216,23 @@ class DirectorParser:
 		# when unk3 is 1, data is script. otherwise 0: name.
 		entryType = read32(data)
 		data.seek(ci_offset)
+
 		count = read16(data) + 1
 		entries = []
 		for i in range(count):
 			entries.append(read32(data))
-		if unk3 == 0 and (data.tell() < data.size):
-			entry.name = readString(data)
-			entry.data = ""
-		else:
-			entry.name = ""
-			entry.data = data.read()
-		print "VWCI: id %d, type %d, name %s, data %s, entries %s, unk %08x/%08x" % (data.rid, entryType, repr(entry.name), repr(entry.data), str(entries), unk2, unk3)
+		assert entries[0] == 0
+		assert count == 6
+
+		rawdata = data.read()
+		entry.script = rawdata[entries[0]:entries[1]]
+		entry.name = getString(rawdata[entries[1]:entries[2]])
+		entry.extDirectory = getString(rawdata[entries[2]:entries[3]])
+		entry.extFilename = getString(rawdata[entries[3]:entries[4]])
+		entry.extType = rawdata[entries[4]:entries[5]]
+		print "VWCI: id %d, type %d, name %s, script %s, unk %08x/%08x" % (data.rid, entryType, repr(entry.name), repr(entry.script), unk2, unk3)
+		if entry.extDirectory or entry.extFilename or entry.extType:
+			print " file %s/%s(%s)" % (repr(entry.extDirectory), repr(entry.extFilename), repr(entry.extType))
 		self.movie.cast[data.rid] = entry
 
 	def parseMacName(self, data):

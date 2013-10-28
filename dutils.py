@@ -23,6 +23,14 @@ def readString(f):
 	s = read8(f)
 	return f.read(s)
 
+def getString(s):
+	if len(s) == 0:
+		return s
+	l = ord(s[0])
+	s = s[1:]
+	assert l == len(s)
+	return s
+
 class Rect:
 	def width(self):
 		return self.right - self.left
