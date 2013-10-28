@@ -1,0 +1,10 @@
+Continuity: Tools for working with Macromedia Director movies.
+
+This is primarily a GUI viewer tool to assist with our implementation of a
+full runtime (someday). It requires Python 2.x and PySide.
+
+At present this handles versions up to v3: you can feed it a Mac resource
+fork or an MMM file (from the Gaffer). Usage: 'python viewer.py filename'.
+
+This is all licensed under GPLv2. Thanks to Screwtape (Tim Allen) for the
+original resource fork code.
