@@ -1,7 +1,8 @@
 class Movie:
 	def __init__(self):
-		self.cast = {}
+		self.castInfo = {}
 		self.labels = []
+		self.cast = {}
 
 		self.channels = {}
 		for i in range(24):
@@ -16,5 +17,11 @@ class Channel:
 class Label:
 	pass
 
-class CastEntry:
+class Sprite:
+	pass
+
+class CastInfo:
+	pass
+
+class CastMember:
 	pass

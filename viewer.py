@@ -45,22 +45,29 @@ class MyMainWindow(QMainWindow):
 		item = QTreeWidgetItem(["Selection", ""])
 		item.addChild(QTreeWidgetItem(["Frame", str(movie.currFrame)]))
 		if movie.currChannel != -1:
-			info = movie.frames[movie.currFrame].cast[movie.currChannel]
+			info = movie.frames[movie.currFrame].sprites[movie.currChannel]
 			item.addChild(QTreeWidgetItem(["Channel", str(movie.currChannel)]))
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 		if movie.currChannel != -1:
 			item = QTreeWidgetItem(["Cast Member", ""])
 			item.addChild(QTreeWidgetItem(["Cast ID", str(info.castId)]))
+			castType = movie.cast[info.castId].castType
+			castTypeNames = {1:"Bitmap",2:"FilmLoop",3:"Text",4:"Palette",5:"Picture",6:"Sound",7:"Button",8:"Shape",9:"Movie",10:"DigitalVideo",11:"Script"}
+			if castType in castTypeNames:
+				typeName = castTypeNames[castType]
+			else:
+				typeName = "<unknown> (%02x)" % castType
+			item.addChild(QTreeWidgetItem(["Cast Type", typeName]))
 			myId = info.castId + 1024
-			if myId in movie.cast:
-				item.addChild(QTreeWidgetItem(["Name", movie.cast[myId].name]))
-				scItem = QTreeWidgetItem(["Script", movie.cast[myId].script])
-				scItem.setToolTip(1, movie.cast[myId].script.replace("\r", "<br>").replace(" ", "&nbsp;"))
+			if myId in movie.castInfo:
+				item.addChild(QTreeWidgetItem(["Name", movie.castInfo[myId].name]))
+				scItem = QTreeWidgetItem(["Script", movie.castInfo[myId].script])
+				scItem.setToolTip(1, movie.castInfo[myId].script.replace("\r", "<br>").replace(" ", "&nbsp;"))
 				item.addChild(scItem)
-				item.addChild(QTreeWidgetItem(["Filename", movie.cast[myId].extFilename]))
-				item.addChild(QTreeWidgetItem(["Directory", movie.cast[myId].extDirectory]))
-				item.addChild(QTreeWidgetItem(["Resource Type", movie.cast[myId].extType]))
+				item.addChild(QTreeWidgetItem(["Filename", movie.castInfo[myId].extFilename]))
+				item.addChild(QTreeWidgetItem(["Directory", movie.castInfo[myId].extDirectory]))
+				item.addChild(QTreeWidgetItem(["Resource Type", movie.castInfo[myId].extType]))
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 		if movie.currChannel != -1:

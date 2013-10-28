@@ -4,6 +4,18 @@ from riffarchive import *
 from resourcefork import *
 import movie
 
+CastBitmap = 1
+CastFilmLoop = 2
+CastText = 3
+CastPalette = 4
+CastPicture = 5
+CastSound = 6
+CastButton = 7
+CastShape = 8
+CastMovie = 9
+CastDigitalVideo = 10
+CastScript = 11
+
 def hexify(data):
 	s = ""
 	allzeros = True
@@ -153,10 +165,10 @@ class DirectorParser:
 		print "unk %s," % hexify(data.read(6)),
 		print
 		# cast:
-		print " cast:",
-		frame.cast = []
+		print " sprites:",
+		frame.sprites = []
 		for i in range(24):
-			entry = movie.CastEntry()
+			entry = movie.Sprite()
 			x1 = data.read(1)
 			entry.enabled = read8(data)
 			x2 = data.read(2)
@@ -166,7 +178,7 @@ class DirectorParser:
 			entry.x = read16(data)
 			entry.height = read16(data)
 			entry.width = read16(data)
-			frame.cast.append(entry)
+			frame.sprites.append(entry)
 			print "%03d(%d)[%s,%s,%04x]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags),
 		print
 		return frame
@@ -178,15 +190,16 @@ class DirectorParser:
 				print "(warning: cast record ran out early)"
 				break
 			entrySize = read8(data)
-			entryType = 0
+			entryType = -1
 			entryData = ''
 			if entrySize > data.tell() + data.size:
 				print "(warning: cast record ran out, wanted %d more bytes)" % entrySize
 				break
 			if entrySize:
-				entryType = read8(data)
+				entry = movie.CastMember()
+				entry.castType = read8(data)
 				entrySize = entrySize - 1
-				if entryType == 1:
+				if entry.castType == 1:
 					flags = read8(data)
 					someFlaggyThing = read16(data)
 					initialRect = readRect(data)
@@ -201,15 +214,16 @@ class DirectorParser:
 					assert entrySize == 0
 				assert entrySize >= 0
 				entryData = data.read(entrySize)
-			print "cast member: id %d, type %d (size %d, %s)" % (currId, entryType, entrySize, hexify(entryData))
-			if entryType == 1:
+				self.movie.cast[currId] = entry
+			print "cast member: id %d, type %d (size %d, %s)" % (currId, entry.castType, entrySize, hexify(entryData))
+			if entry.castType == 1:
 				print "  flag %02x/%04x, %s, %s, unk %04x %04x" % (flags, someFlaggyThing, initialRect, boundingRect, u1, u2)
 				if (someFlaggyThing & 0x8000):
 					print "  unk %04x %04x" % (u7, u8)
 			currId = currId + 1
 
 	def parseCastInfo(self, data):
-		entry = movie.CastEntry()
+		entry = movie.CastInfo()
 		ci_offset = read32(data)
 		unk2 = read32(data) # not int!
 		unk3 = read32(data) # not int!
@@ -233,7 +247,7 @@ class DirectorParser:
 		print "VWCI: id %d, type %d, name %s, script %s, unk %08x/%08x" % (data.rid, entryType, repr(entry.name), repr(entry.script), unk2, unk3)
 		if entry.extDirectory or entry.extFilename or entry.extType:
 			print " file %s/%s(%s)" % (repr(entry.extDirectory), repr(entry.extFilename), repr(entry.extType))
-		self.movie.cast[data.rid] = entry
+		self.movie.castInfo[data.rid] = entry
 
 	def parseMacName(self, data):
 		if data.size:

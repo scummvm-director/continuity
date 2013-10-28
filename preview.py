@@ -19,8 +19,8 @@ class Preview(QWidget):
 
 		painter = QPainter(self)
 
-		for i in range(len(self.movie.frames[self.movie.currFrame].cast)):
-			info = self.movie.frames[self.movie.currFrame].cast[i]
+		for i in range(len(self.movie.frames[self.movie.currFrame].sprites)):
+			info = self.movie.frames[self.movie.currFrame].sprites[i]
 			if not info.enabled:
 				continue
 			myId = 1024 + info.castId
@@ -51,11 +51,12 @@ class Preview(QWidget):
 				offx = info.width - img.size().width()
 				offy = info.height - img.size().height()
 				painter.drawPixmap(info.x - info.width/2 + offx/2, info.y - info.height/2 + offy/2, pixmap)
-		info = self.movie.frames[self.movie.currFrame].cast[self.movie.currChannel]
-		pen = QPen("black")
-		pen.setStyle(Qt.PenStyle.DashDotLine)
-		painter.setPen(pen)
-		painter.drawRect(info.x - info.width/2, info.y - info.height/2, info.width, info.height)
+		if self.movie.currChannel != -1:
+			info = self.movie.frames[self.movie.currFrame].sprites[self.movie.currChannel]
+			pen = QPen("black")
+			pen.setStyle(Qt.PenStyle.DashDotLine)
+			painter.setPen(pen)
+			painter.drawRect(info.x - info.width/2, info.y - info.height/2, info.width, info.height)
 
 		return True
 

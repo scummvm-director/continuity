@@ -41,11 +41,11 @@ class Timeline(QWidget):
 			y = -1
 		x = x / gridSizeX
 		y = y / gridSizeY
-		if (not valid) or x >= len(self.movie.frames) or (chanValid and y >= len(self.movie.frames[x].cast)):
+		if (not valid) or x >= len(self.movie.frames) or (chanValid and y >= len(self.movie.frames[x].sprites)):
 			valid = False
 		info = None
 		if chanValid:
-			info = self.movie.frames[x].cast[y]
+			info = self.movie.frames[x].sprites[y]
 		if (not valid) or (info and not info.enabled):
 			self.movie.currFrame = -1
 			self.movie.currChannel = -1
@@ -70,19 +70,19 @@ class Timeline(QWidget):
 			return True
 		oldX = x
 		oldY = y
-		if x >= len(self.movie.frames) or y >= len(self.movie.frames[x].cast):
+		if x >= len(self.movie.frames) or y >= len(self.movie.frames[x].sprites):
 			oldX = -1
 			QToolTip.hideText()
 			return True
-		info = self.movie.frames[x].cast[y]
+		info = self.movie.frames[x].sprites[y]
 		#QToolTip.hideText()
 		if not info.enabled:
 			QToolTip.hideText()
 			return True
 		myId = 1024 + info.castId
 		mystr = str(info.castId)
-		if myId in self.movie.cast:
-			mystr = "%s (%s)" % (mystr, self.movie.cast[myId].name)
+		if myId in self.movie.castInfo:
+			mystr = "%s (%s)" % (mystr, self.movie.castInfo[myId].name)
 		if "BITD" in self.movie.resources:
 			for p in self.movie.resources["BITD"]:
 				if p.rid != myId:
@@ -167,8 +167,8 @@ class Timeline(QWidget):
 		for x in range(len(self.movie.frames)):
 			xpos = (x+1) * gridSizeX
 			frame = self.movie.frames[x]
-			for y in range(len(frame.cast)):
-				entry = frame.cast[y]
+			for y in range(len(frame.sprites)):
+				entry = frame.sprites[y]
 				if not entry.enabled:
 					continue
 				ypos = (y + 2) * gridSizeY
@@ -187,8 +187,8 @@ class Timeline(QWidget):
 		for x in range(len(self.movie.frames)):
 			xpos = (x+1) * gridSizeX
 			frame = self.movie.frames[x]
-			for y in range(len(frame.cast)):
-				entry = frame.cast[y]
+			for y in range(len(frame.sprites)):
+				entry = frame.sprites[y]
 				oldEntry = None
 				if y in seenEntries:
 					oldEntry = seenEntries[y]
@@ -203,8 +203,8 @@ class Timeline(QWidget):
 					continue
 				if entry.castId != oldEntry:
 					text = "(" + str(entry.castId) + ")"
-					if ((1024 + entry.castId) in self.movie.cast) and len(text):
-						text = self.movie.cast[1024 + entry.castId].name
+					if ((1024 + entry.castId) in self.movie.castInfo) and len(text):
+						text = self.movie.castInfo[1024 + entry.castId].name
 					path = QPainterPath()
 					painter.setPen(QPen("black"))
 					painter.setBrush(QBrush("red", Qt.SolidPattern))
