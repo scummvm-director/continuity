@@ -54,11 +54,13 @@ class MyMainWindow(QMainWindow):
 			item.addChild(QTreeWidgetItem(["Cast ID", str(info.castId)]))
 			myId = info.castId + 1024
 			if myId in movie.cast:
-				item.addChild(QTreeWidgetItem(["Name", str(movie.cast[myId].name)]))
-				item.addChild(QTreeWidgetItem(["Script", str(movie.cast[myId].script)]))
-				item.addChild(QTreeWidgetItem(["Filename", str(movie.cast[myId].extFilename)]))
-				item.addChild(QTreeWidgetItem(["Directory", str(movie.cast[myId].extDirectory)]))
-				item.addChild(QTreeWidgetItem(["Resource Type", str(movie.cast[myId].extType)]))
+				item.addChild(QTreeWidgetItem(["Name", movie.cast[myId].name]))
+				scItem = QTreeWidgetItem(["Script", movie.cast[myId].script])
+				scItem.setToolTip(1, movie.cast[myId].script.replace("\r", "<br>").replace(" ", "&nbsp;"))
+				item.addChild(scItem)
+				item.addChild(QTreeWidgetItem(["Filename", movie.cast[myId].extFilename]))
+				item.addChild(QTreeWidgetItem(["Directory", movie.cast[myId].extDirectory]))
+				item.addChild(QTreeWidgetItem(["Resource Type", movie.cast[myId].extType]))
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 		if movie.currChannel != -1:
