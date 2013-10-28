@@ -159,15 +159,15 @@ class DirectorParser:
 			entry = movie.CastEntry()
 			x1 = data.read(1)
 			entry.enabled = read8(data)
-			x2 = data.read(3)
-			entry.unk3 = read8(data)
+			x2 = data.read(2)
+			entry.flags = read16(data)
 			entry.castId = read16(data)
 			entry.y = read16(data)
 			entry.x = read16(data)
 			entry.height = read16(data)
 			entry.width = read16(data)
 			frame.cast.append(entry)
-			print "%03d(%d)[%s,%s,%d]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.unk3),
+			print "%03d(%d)[%s,%s,%04x]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags),
 		print
 		return frame
 

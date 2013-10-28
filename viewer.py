@@ -68,6 +68,25 @@ class MyMainWindow(QMainWindow):
 			if info.height:
 				item.addChild(QTreeWidgetItem(["Position", "%d, %d" % (info.x, info.y)]))
 				item.addChild(QTreeWidgetItem(["Size", "%d, %d" % (info.width, info.height)]))
+				pentypes = {0:"copy",1:"transparent",2:"reverse",3:"ghost",4:"not copy",5:"not trans",6:"not reverse",7:"not ghost",8:"matte",9:"mask",0x24:"backgnd trans",0x20:"blend",0x27:"dark",0x25:"light",0x22:"add",0x21:"add pin",0x26:"sub",0x23:"sub pin"}
+				pentype = info.flags & 0x3f # TODO: correct?
+				if pentype in pentypes.keys():
+					pen = pentypes[pentype]
+				else:
+					pen = "<unknown (%02x)>" % pentype
+				item.addChild(QTreeWidgetItem(["Pen", pen]))
+				trails = "No"
+				if info.flags & 0x40:
+					trails = "Yes"
+				item.addChild(QTreeWidgetItem(["Trails", trails]))
+				antialias = "Off"
+				if info.flags & 0x2000:
+					antialias = "Low"
+				elif info.flags & 0x4000:
+					antialias = "Mid"
+				if info.flags & 0x6000 == 0x6000:
+					antialias = "High"
+				item.addChild(QTreeWidgetItem(["Antialias", antialias]))
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 
