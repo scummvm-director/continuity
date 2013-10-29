@@ -58,7 +58,7 @@ class DirectorParser:
 		if 'VWAC' in resources:
 			self.parseActions(resources['VWAC'][0])
 		if 'VWFI' in resources:
-			pass # FIXME
+			self.parseFileInfo(resources['VWFI'][0])
 		if 'VWFM' in resources:
 			self.parseFontMap(resources['VWFM'][0])
 		if 'VWTL' in resources:
@@ -222,12 +222,10 @@ class DirectorParser:
 					print "  unk %04x %04x" % (u7, u8)
 			currId = currId + 1
 
-	def parseCastInfo(self, data):
-		entry = movie.CastInfo()
+	def parseSubstrings(self, data):
 		ci_offset = read32(data)
 		unk2 = read32(data) # not int!
 		unk3 = read32(data) # not int!
-		# when unk3 is 1, data is script. otherwise 0: name.
 		entryType = read32(data)
 		data.seek(ci_offset)
 
@@ -235,19 +233,44 @@ class DirectorParser:
 		entries = []
 		for i in range(count):
 			entries.append(read32(data))
-		assert entries[0] == 0
-		assert count == 6
-
 		rawdata = data.read()
-		entry.script = rawdata[entries[0]:entries[1]]
-		entry.name = getString(rawdata[entries[1]:entries[2]])
-		entry.extDirectory = getString(rawdata[entries[2]:entries[3]])
-		entry.extFilename = getString(rawdata[entries[3]:entries[4]])
-		entry.extType = rawdata[entries[4]:entries[5]]
+		assert entries[0] == 0
+		assert entries[-1] == len(rawdata)
+
+		strings = []
+		for i in range(count-1):
+			strings.append(rawdata[entries[i]:entries[i+1]])
+
+		return (strings, unk2, unk3, entryType)
+
+	def parseCastInfo(self, data):
+		entry = movie.CastInfo()
+		strings, unk2, unk3, entryType = self.parseSubstrings(data)
+		assert len(strings) == 5
+
+		entry.script = strings[0]
+		entry.name = getString(strings[1])
+		entry.extDirectory = getString(strings[2])
+		entry.extFilename = getString(strings[3])
+		entry.extType = strings[4]
 		print "VWCI: id %d, type %d, name %s, script %s, unk %08x/%08x" % (data.rid, entryType, repr(entry.name), repr(entry.script), unk2, unk3)
 		if entry.extDirectory or entry.extFilename or entry.extType:
 			print " file %s/%s(%s)" % (repr(entry.extDirectory), repr(entry.extFilename), repr(entry.extType))
 		self.movie.castInfo[data.rid] = entry
+
+	def parseFileInfo(self, data):
+		ss,unk2,unk3,flags = self.parseSubstrings(data)
+		self.movie.script = ss[0]
+		self.movie.changedBy = getString(ss[1])
+		self.movie.createdBy = getString(ss[2])
+		self.movie.flags = flags
+		assert ss[3] == ""
+		assert len(ss[4]) == 2
+		self.movie.whenLoadCast = struct.unpack(">H", ss[4])[0]
+		assert self.movie.whenLoadCast in [0,1,2]
+		assert ss[5] == ""
+		assert ss[6] == ""
+		print 'VWFI data', ss,hex(unk2),hex(unk3),hex(flags)
 
 	def parseMacName(self, data):
 		if data.size:
@@ -331,4 +354,3 @@ def parseFile(filename):
 if __name__ == '__main__':
 	import sys
 	movie = parseFile(sys.argv[1])
-	print movie.__dict__

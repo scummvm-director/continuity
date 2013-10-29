@@ -36,11 +36,30 @@ class MyMainWindow(QMainWindow):
 		hsplitter.addWidget(self.info)
 		hsplitter.addWidget(mypreviewarea)
 		self.setCentralWidget(vsplitter)
+		self.updateTable()
 
 	def updateTable(self):
 		while self.info.takeTopLevelItem(0):
 			pass
 		if movie.currFrame == -1:
+			item = QTreeWidgetItem(["Movie", ""])
+			item.addChild(QTreeWidgetItem(["Created By", movie.createdBy]))
+			item.addChild(QTreeWidgetItem(["Changed By", movie.changedBy]))
+			scItem = QTreeWidgetItem(["Script", movie.script])
+			scItem.setToolTip(1, movie.script.replace("\r", "<br>").replace(" ", "&nbsp;"))
+			item.addChild(scItem)
+			whenLoadCastNames = {0:"When Needed", 1:"After Frame One", 2:"Before Frame One"}
+			item.addChild(QTreeWidgetItem(["Load Cast", whenLoadCastNames[movie.whenLoadCast]]))
+			flags = []
+			if movie.flags & 0x20:
+				flags.append("don't AA")
+			if movie.flags & 0x40:
+				flags.append("remap palettes")
+			item.addChild(QTreeWidgetItem(["Flags", ", ".join(flags)]))
+			self.info.addTopLevelItem(item)
+			self.info.expandItem(item)
+
+			self.info.resizeColumnToContents(0)
 			return
 		item = QTreeWidgetItem(["Selection", ""])
 		item.addChild(QTreeWidgetItem(["Frame", str(movie.currFrame)]))
