@@ -29,15 +29,20 @@ class Preview(QWidget):
 				dib = self.movie.dibs[myId]
 				dib.seek(0)
 				data = dib.read()
+				imgdata = imageFromDIB(data, self.movie.currFrame, self.movie)
+				img = QImage.fromData(imgdata, "bmp")
 				depth = ord(data[14])
 				if depth == 1:
-					colorkey = 1
+					if qGray(img.color(0)) >= qGray(img.color(1)):
+						# qt's bmp decoder deliberately sabotages the image in this case!
+						# see the swapPixel01 call in qbmphandler.cpp
+						colorkey = 0
+					else:
+						colorkey = 1
 				elif depth == 4:
 					colorkey = 15
 				else:
 					colorkey = 255
-				imgdata = imageFromDIB(data, self.movie.currFrame, self.movie)
-				img = QImage.fromData(imgdata, "bmp")
 				mask = QImage(img.size(), QImage.Format_Mono)
 				for x in range(img.size().width()):
 					for y in range(img.size().height()):

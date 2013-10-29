@@ -74,9 +74,11 @@ def imageFromDIB(data, pos, movie):
 				p.seek(0)
 				d = p.read()
 				for i in range(len(d)/6):
+					l = len(d)/6
+					n = l - i - 1
 					if i >= palentries:
 						break
-					palette = palette + d[i*6+4] + d[i*6+2] + d[i*6] + '\x00'
+					palette = palette + d[n*6+4] + d[n*6+2] + d[n*6] + '\x00'
 				while len(palette) < 4*palentries:
 					palette = palette + '\x00'
 	else:
