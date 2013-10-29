@@ -174,10 +174,10 @@ class DirectorParser:
 			x2 = data.read(2)
 			entry.flags = read16(data)
 			entry.castId = read16(data)
-			entry.y = read16(data)
-			entry.x = read16(data)
-			entry.height = read16(data)
-			entry.width = read16(data)
+			entry.y = read16(data,True)
+			entry.x = read16(data,True)
+			entry.height = read16(data,True)
+			entry.width = read16(data,True)
 			frame.sprites.append(entry)
 			print "%03d(%d)[%s,%s,%04x]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags),
 		print
@@ -202,10 +202,11 @@ class DirectorParser:
 				if entry.castType == 1:
 					flags = read8(data)
 					someFlaggyThing = read16(data)
-					initialRect = readRect(data)
-					boundingRect = readRect(data)
-					u1 = read16(data)
-					u2 = read16(data)
+					entry.initialRect = readRect(data)
+					entry.boundingRect = readRect(data)
+					# registration point
+					entry.regY = read16(data,True)
+					entry.regX = read16(data,True)
 					entrySize = entrySize - 23
 					if (someFlaggyThing & 0x8000):
 						u7 = read16(data)
@@ -217,7 +218,7 @@ class DirectorParser:
 				self.movie.cast[currId] = entry
 			print "cast member: id %d, type %d (size %d, %s)" % (currId, entry.castType, entrySize, hexify(entryData))
 			if entry.castType == 1:
-				print "  flag %02x/%04x, %s, %s, unk %04x %04x" % (flags, someFlaggyThing, initialRect, boundingRect, u1, u2)
+				print "  flag %02x/%04x, %s, %s, reg (%d, %d)" % (flags, someFlaggyThing, entry.initialRect, entry.boundingRect, entry.regX, entry.regY)
 				if (someFlaggyThing & 0x8000):
 					print "  unk %04x %04x" % (u7, u8)
 			currId = currId + 1

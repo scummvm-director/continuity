@@ -8,10 +8,10 @@ def read32(f, le=False):
 	else:
 	        return struct.unpack(">I", x)[0]
 
-def read16(f, le=False):
+def read16(f, signed=False):
         x = f.read(2)
-	if le:
-	        return struct.unpack("<H", x)[0]
+	if signed:
+	        return struct.unpack(">h", x)[0]
 	else:
 	        return struct.unpack(">H", x)[0]
 
@@ -43,10 +43,10 @@ class Rect:
 
 def readRect(f):
 	r = Rect()
-	r.top = read16(f)
-	r.left = read16(f)
-	r.bottom = read16(f)
-	r.right = read16(f)
+	r.top = read16(f,True)
+	r.left = read16(f,True)
+	r.bottom = read16(f,True)
+	r.right = read16(f,True)
 	return r
 
 import struct
