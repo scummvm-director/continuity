@@ -49,21 +49,9 @@ def readRect(f):
 	r.right = read16(f,True)
 	return r
 
-import struct
-def imageFromDIB(data, pos, movie):
-	# fake a stupid BMP (sigh)
+def getPaletteFor(pos, movie):
+	palentries = 256
 	palette = ""
-	assert ord(data[0]) == 40 and ord(data[1]) == 0 # size
-	depth = ord(data[14])
-	width, height = struct.unpack("<Ii", data[4:12])
-	assert depth == 1 or depth == 4 or depth == 8
-	palentries = ord(data[32]) + (ord(data[33]) << 8)
-	if palentries == 0:
-#		palentries = 2**depth
-		palentries = 256
-	else:
-		# FIXME
-		print "WARNING: palentries %d" % palentries
 	palId = 0
 	for n in range(pos+1):
 		if movie.frames[n].palette != 0:
@@ -92,6 +80,22 @@ def imageFromDIB(data, pos, movie):
 			# high bytes of uint16s, ignore the first
 #			palette = palette + pf[e*8+6] + pf[e*8+4] + pf[e*8+2] + '\x00'
 			palette = palette + pf[ee*8+6] + pf[ee*8+4] + pf[ee*8+2] + '\x00'
+	return palette
+
+import struct
+def imageFromDIB(data, palette):
+	# fake a stupid BMP (sigh)
+	assert ord(data[0]) == 40 and ord(data[1]) == 0 # size
+	depth = ord(data[14])
+	width, height = struct.unpack("<Ii", data[4:12])
+	assert depth == 1 or depth == 4 or depth == 8
+	palentries = ord(data[32]) + (ord(data[33]) << 8)
+	if palentries == 0:
+#		palentries = 2**depth
+		palentries = 256
+	else:
+		# FIXME
+		print "WARNING: palentries %d" % palentries
 	totalsize = 14 + len(data) + len(palette)
 	offset = 14 + 40 + len(palette)
 	rawdata = data[40:]

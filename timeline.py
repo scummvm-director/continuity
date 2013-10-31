@@ -93,7 +93,8 @@ class Timeline(QWidget):
 			dib = self.movie.dibs[myId]
 			dib.seek(0)
 			data = dib.read()
-			imgdata = imageFromDIB(data, x, self.movie)
+			palette = getPaletteFor(x, self.movie)
+			imgdata = imageFromDIB(data, palette)
 			img = QImage.fromData(imgdata, "bmp")
 
 			ba = QByteArray()

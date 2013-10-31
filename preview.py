@@ -19,6 +19,12 @@ class Preview(QWidget):
 
 		painter = QPainter(self)
 
+		palette = getPaletteFor(self.movie.currFrame, self.movie)
+		bgcol = (self.movie.stageColor ^ 0xff) & (2**self.movie.colorDepth - 1)
+		painter.setBrush(QBrush(QColor(ord(palette[4*bgcol+2]), ord(palette[4*bgcol+1]), ord(palette[4*bgcol]))))
+		painter.drawRect(0, 0, self.movie.movieRect.width(), self.movie.movieRect.height())
+		painter.setBrush(QBrush())
+
 		for i in range(len(self.movie.frames[self.movie.currFrame].sprites)):
 			info = self.movie.frames[self.movie.currFrame].sprites[i]
 			if not info.enabled:
@@ -29,7 +35,7 @@ class Preview(QWidget):
 				dib = self.movie.dibs[myId]
 				dib.seek(0)
 				data = dib.read()
-				imgdata = imageFromDIB(data, self.movie.currFrame, self.movie)
+				imgdata = imageFromDIB(data, palette)
 				img = QImage.fromData(imgdata, "bmp")
 				pixmap = QPixmap.fromImage(img)
 				ink = info.flags & 0x3f
@@ -68,6 +74,7 @@ class Preview(QWidget):
 			pen = QPen("black")
 			pen.setStyle(Qt.PenStyle.DashDotLine)
 			painter.setPen(pen)
+			painter.setBackgroundMode(Qt.OpaqueMode)
 			castinfo = self.movie.cast[info.castId]
 			offx = info.x + castinfo.initialRect.left - castinfo.regX
 			offy = info.y + castinfo.initialRect.top - castinfo.regY

@@ -84,13 +84,13 @@ class DirectorParser:
 		self.movie.castArrayStart = read16(data)
 		self.movie.castArrayEnd = read16(data)
 		self.movie.initialFrameRate = read8(data)
-		# FIXME: probably this is actually another variable which should be skipped
-		if self.myfile.version > 36:
-			print hexify(data.read(9)) # skipped
-		else:
-			print hexify(data.read(7)) # skipped
+		# FIXME: the versioning in the stuff below is probably wrong?
+		print hexify(data.read(9)) # skipped
 		self.movie.stageColor = read16(data)
-		self.movie.colorDepth = read16(data)
+		if self.myfile.version > 36:
+			self.movie.colorDepth = read16(data)
+		else:
+			self.movie.colorDepth = 8
 		print "config: unk %d, ver %x, rect %s, cast array %d-%d, framerate %d, stage color %d, depth %d" % (unk, version1, self.movie.movieRect, self.movie.castArrayStart, self.movie.castArrayEnd, self.movie.initialFrameRate, self.movie.stageColor, self.movie.colorDepth)
 		if data.size > 30:
 			unk1f = read8(data)
@@ -101,6 +101,8 @@ class DirectorParser:
 				version2 = read16(data)
 				print "config: ver2 %d" % version2
 				print "%x %x %x %x %x %x" % (read16(data), read16(data), read16(data), read16(data), read16(data), read16(data))
+		if self.movie.colorDepth > 8:
+			self.movie.colorDepth = 8
 		# FIXME: sanity-check colorDepth, set version2 to 0x404 if a VWFI is present, etc etc
 
 	def parseScore(self, data):
