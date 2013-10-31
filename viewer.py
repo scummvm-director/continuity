@@ -94,13 +94,13 @@ class MyMainWindow(QMainWindow):
 			if info.height:
 				item.addChild(QTreeWidgetItem(["Position", "%d, %d" % (info.x, info.y)]))
 				item.addChild(QTreeWidgetItem(["Size", "%d, %d" % (info.width, info.height)]))
-				pentypes = {0:"copy",1:"transparent",2:"reverse",3:"ghost",4:"not copy",5:"not trans",6:"not reverse",7:"not ghost",8:"matte",9:"mask",0x24:"backgnd trans",0x20:"blend",0x27:"dark",0x25:"light",0x22:"add",0x21:"add pin",0x26:"sub",0x23:"sub pin"}
-				pentype = info.flags & 0x3f # TODO: correct?
-				if pentype in pentypes.keys():
-					pen = pentypes[pentype]
+				inktypes = {0:"copy",1:"transparent",2:"reverse",3:"ghost",4:"not copy",5:"not trans",6:"not reverse",7:"not ghost",8:"matte",9:"mask",0x24:"backgnd trans",0x20:"blend",0x27:"dark",0x25:"light",0x22:"add",0x21:"add pin",0x26:"sub",0x23:"sub pin"}
+				inktype = info.flags & 0x3f # TODO: correct?
+				if inktype in inktypes.keys():
+					ink = inktypes[inktype]
 				else:
-					pen = "<unknown (%02x)>" % pentype
-				item.addChild(QTreeWidgetItem(["Pen", pen]))
+					ink = "<unknown (%02x)>" % inktype
+				item.addChild(QTreeWidgetItem(["Ink", ink]))
 				trails = "No"
 				if info.flags & 0x40:
 					trails = "Yes"
