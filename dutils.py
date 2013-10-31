@@ -82,7 +82,7 @@ def imageFromDIB(data, pos, movie):
 				while len(palette) < 4*palentries:
 					palette = palette + '\x00'
 	else:
-		pf = open("data/81.pal")
+		pf = open("data/mac.pal")
 		pf.read(6) # 0:seed,4:flags
 		assert read16(pf)+1 == 256 # count
 		pf = pf.read()
