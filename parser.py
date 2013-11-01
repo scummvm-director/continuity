@@ -162,6 +162,7 @@ class DirectorParser:
 		frame.sound1 = read16(data)
 		if frame.sound1:
 			frame.sprites[movie.soundChannel1] = movie.Sprite()
+			frame.sprites[movie.soundChannel1].castId = frame.sound1
 		print "action %d, unk trans %d (%d/%d), tempo %d, sound %d (%02x)," % (frame.actionId, frame.transFlags, frame.transChunkSize, frame.transType, frame.tempo, frame.sound1, frame.soundType1),
 		print "unk %s," % hexify(data.read(3)),
 		frame.skipFrameFlags = read8(data)
@@ -172,6 +173,7 @@ class DirectorParser:
 		frame.soundType2 = read8(data)
 		if frame.sound2:
 			frame.sprites[movie.soundChannel2] = movie.Sprite()
+			frame.sprites[movie.soundChannel2].castId = frame.sound2
 		print "sound2 %d (%02x)" % (frame.sound2, frame.soundType2),
 		print
 		# palette:

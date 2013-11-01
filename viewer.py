@@ -71,7 +71,7 @@ class MyMainWindow(QMainWindow):
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 		item = None
-		if movie.currChannel > 0:
+		if movie.currChannel > 0 or movie.currChannel == soundChannel1 or movie.currChannel == soundChannel2:
 			item = QTreeWidgetItem(["Cast Member", ""])
 			item.addChild(QTreeWidgetItem(["Cast ID", str(info.castId)]))
 			castType = movie.cast[info.castId].castType
