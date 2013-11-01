@@ -92,7 +92,20 @@ class MyMainWindow(QMainWindow):
 				item.addChild(QTreeWidgetItem(["Resource Type", movie.castInfo[myId].extType]))
 		elif movie.currChannel == tempoChannel:
 			item = QTreeWidgetItem(["Tempo", ""])
-			item.addChild(QTreeWidgetItem(["Tempo", str(frame.tempo)]))
+			if frame.tempo <= 60:
+				item.addChild(QTreeWidgetItem(["Set FPS", str(frame.tempo)]))
+			elif frame.tempo >= 161:
+				item.addChild(QTreeWidgetItem(["Delay", str(256 - frame.tempo)]))
+			elif frame.tempo >= 136:
+				item.addChild(QTreeWidgetItem(["Wait For", "Channel " + str(frame.tempo - 136)]))
+			elif frame.tempo == 128:
+				item.addChild(QTreeWidgetItem(["Wait For", "Click/Key"]))
+			elif frame.tempo == 135:
+				item.addChild(QTreeWidgetItem(["Wait For", "Sound Channel 1"]))
+			elif frame.tempo == 134:
+				item.addChild(QTreeWidgetItem(["Wait For", "Sound Channel 2"]))
+			else:
+				item.addChild(QTreeWidgetItem(["Unknown", str(frame.tempo)]))
 		elif movie.currChannel == scriptChannel:
 			item = QTreeWidgetItem(["Frame Action", ""])
 			text = movie.actions[frame.actionId].script
