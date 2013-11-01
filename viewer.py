@@ -99,6 +99,24 @@ class MyMainWindow(QMainWindow):
 			scItem = QTreeWidgetItem(["Script", text])
 			scItem.setToolTip(1, "<p>"+text.replace("\r", "<br>").replace(" ", "&nbsp;"))
 			item.addChild(scItem)
+		elif movie.currChannel == paletteChannel:
+			item = QTreeWidgetItem(["Palette", ""])
+			item.addChild(QTreeWidgetItem(["Palette ID", str(frame.palette)]))
+			item.addChild(QTreeWidgetItem(["First Color", str((frame.paletteFirstColor - 0x80) % 256)]))
+			item.addChild(QTreeWidgetItem(["Last Color", str((frame.paletteLastColor - 0x80) % 256)]))
+			item.addChild(QTreeWidgetItem(["Speed", str(frame.paletteSpeed)]))
+			item.addChild(QTreeWidgetItem(["# Frames", str(frame.paletteFrameCount)]))
+			item.addChild(QTreeWidgetItem(["# Cycles", str(frame.paletteCycleCount)]))
+			flags = []
+			if frame.paletteFlags & 0x60 == 0x60:
+				flags.append("fade->white")
+			elif frame.paletteFlags & 0x60 == 0x40:
+				flags.append("fade->black")
+			if frame.paletteFlags & 0x4:
+				flags.append("over time")
+			if frame.paletteFlags & 0x80:
+				flags.append("cycle")
+			item.addChild(QTreeWidgetItem(["Flags", ", ".join(flags)]))
 		if item:
 			self.info.addTopLevelItem(item)
 			self.info.expandItem(item)
