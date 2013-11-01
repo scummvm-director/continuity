@@ -1,6 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from dutils import *
+from movie import *
 
 class Preview(QWidget):
 	def __init__(self, parent, movie):
@@ -25,8 +26,8 @@ class Preview(QWidget):
 		painter.drawRect(0, 0, self.movie.movieRect.width(), self.movie.movieRect.height())
 		painter.setBrush(QBrush())
 
-		for i in range(len(self.movie.frames[self.movie.currFrame].sprites)):
-			info = self.movie.frames[self.movie.currFrame].sprites[i]
+		for i in range(channelCount):
+			info = self.movie.frames[self.movie.currFrame].sprites[i+1]
 			if not info.enabled:
 				continue
 			myId = 1024 + info.castId
@@ -69,7 +70,7 @@ class Preview(QWidget):
 				offx = info.x + castinfo.initialRect.left - castinfo.regX
 				offy = info.y + castinfo.initialRect.top - castinfo.regY
 				painter.drawPixmap(offx, offy, pixmap)
-		if self.movie.currChannel != -1:
+		if self.movie.currChannel != None and self.movie.currChannel > 0:
 			info = self.movie.frames[self.movie.currFrame].sprites[self.movie.currChannel]
 			pen = QPen("black")
 			pen.setStyle(Qt.PenStyle.DashDotLine)

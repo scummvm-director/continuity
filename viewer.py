@@ -4,6 +4,7 @@ from PySide.QtGui import *
 import timeline
 import preview
 import parser
+from movie import *
 
 class TimelineArea(QScrollArea):
 	def __init__(self, parent):
@@ -62,13 +63,15 @@ class MyMainWindow(QMainWindow):
 			self.info.resizeColumnToContents(0)
 			return
 		item = QTreeWidgetItem(["Selection", ""])
-		item.addChild(QTreeWidgetItem(["Frame", str(movie.currFrame)]))
-		if movie.currChannel != -1:
-			info = movie.frames[movie.currFrame].sprites[movie.currChannel]
+		item.addChild(QTreeWidgetItem(["Frame", str(movie.currFrame + 1)]))
+		frame = movie.frames[movie.currFrame]
+		if movie.currChannel != None:
+			info = frame.sprites[movie.currChannel]
 			item.addChild(QTreeWidgetItem(["Channel", str(movie.currChannel)]))
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
-		if movie.currChannel != -1:
+		item = None
+		if movie.currChannel > 0:
 			item = QTreeWidgetItem(["Cast Member", ""])
 			item.addChild(QTreeWidgetItem(["Cast ID", str(info.castId)]))
 			castType = movie.cast[info.castId].castType
@@ -87,9 +90,19 @@ class MyMainWindow(QMainWindow):
 				item.addChild(QTreeWidgetItem(["Filename", movie.castInfo[myId].extFilename]))
 				item.addChild(QTreeWidgetItem(["Directory", movie.castInfo[myId].extDirectory]))
 				item.addChild(QTreeWidgetItem(["Resource Type", movie.castInfo[myId].extType]))
-		self.info.addTopLevelItem(item)
-		self.info.expandItem(item)
-		if movie.currChannel != -1:
+		elif movie.currChannel == tempoChannel:
+			item = QTreeWidgetItem(["Tempo", ""])
+			item.addChild(QTreeWidgetItem(["Tempo", str(frame.tempo)]))
+		elif movie.currChannel == scriptChannel:
+			item = QTreeWidgetItem(["Frame Action", ""])
+			text = movie.actions[frame.actionId].script
+			scItem = QTreeWidgetItem(["Script", text])
+			scItem.setToolTip(1, text.replace("\r", "<br>").replace(" ", "&nbsp;"))
+			item.addChild(scItem)
+		if item:
+			self.info.addTopLevelItem(item)
+			self.info.expandItem(item)
+		if movie.currChannel > 0:
 			item = QTreeWidgetItem(["Sprite", ""])
 			if info.height:
 				item.addChild(QTreeWidgetItem(["Position", "%d, %d" % (info.x, info.y)]))
@@ -113,8 +126,8 @@ class MyMainWindow(QMainWindow):
 				if info.flags & 0x6000 == 0x6000:
 					antialias = "High"
 				item.addChild(QTreeWidgetItem(["Antialias", antialias]))
-		self.info.addTopLevelItem(item)
-		self.info.expandItem(item)
+			self.info.addTopLevelItem(item)
+			self.info.expandItem(item)
 
 		self.info.resizeColumnToContents(0)
 

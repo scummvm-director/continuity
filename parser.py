@@ -147,17 +147,26 @@ class DirectorParser:
 		data = StringIO.StringIO(score)
 		# header:
 		print " header:",
-		print "unk %s," % hexify(data.read(2)),
+		frame.actionId = read8(data)
+		if frame.actionId:
+			frame.sprites[movie.scriptChannel] = movie.Sprite()
+		frame.unk1 = read8(data)
 		frame.transFlags = read8(data)
 		frame.transData1 = read8(data)
 		frame.tempo = read8(data)
+		if frame.tempo:
+			frame.sprites[movie.tempoChannel] = movie.Sprite()
 		frame.transData2 = read8(data)
 		frame.sound = read16(data)
-		print "trans %d (%d/%d), tempo %d, sound %d," % (frame.transFlags, frame.transData1, frame.transData2, frame.tempo, frame.sound),
+		if frame.sound:
+			frame.sprites[movie.soundChannel1] = movie.Sprite()
+		print "action %d, unk 0x%02x, trans %d (%d/%d), tempo %d, sound %d," % (frame.actionId, frame.unk1, frame.transFlags, frame.transData1, frame.transData2, frame.tempo, frame.sound),
 		print "unk %s," % hexify(data.read(8)),
 		print
 		# palette:
 		frame.palette = read16(data)
+		if frame.palette:
+			frame.sprites[movie.paletteChannel] = movie.Sprite()
 		print " palette %d:" % frame.palette,
 		print "unk %s," % hexify(data.read(2))
 		print read8(data), # palette data1
@@ -168,8 +177,7 @@ class DirectorParser:
 		print
 		# cast:
 		print " sprites:",
-		frame.sprites = []
-		for i in range(24):
+		for i in range(movie.channelCount):
 			entry = movie.Sprite()
 			x1 = data.read(1)
 			entry.enabled = read8(data)
@@ -180,7 +188,7 @@ class DirectorParser:
 			entry.x = read16(data,True)
 			entry.height = read16(data,True)
 			entry.width = read16(data,True)
-			frame.sprites.append(entry)
+			frame.sprites[i+1] = entry
 			print "%03d(%d)[%s,%s,%04x]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags),
 		print
 		return frame
@@ -304,6 +312,7 @@ class DirectorParser:
 
 	# TODO: duplicates code below
 	def parseActions(self, data):
+		self.movie.actions = {}
 		# FIXME: unverified
 		count = read16(data) + 1
 		labels = []
@@ -315,6 +324,10 @@ class DirectorParser:
 		for i in range(count - 1):
 			s = stringdata[labels[i][1]:labels[i+1][1]]
 			print "%d/%d %s," % (labels[i][0][0], labels[i][0][1], repr(s)),
+			myaction = movie.Action()
+			myaction.script = s
+			# TODO: can frames have multiple actions..?
+			self.movie.actions[labels[i][0][0]] = myaction
 		print
 		# last entry is just a terminator
 		assert labels[-1][0][1] == 0

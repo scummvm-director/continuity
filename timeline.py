@@ -1,6 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 from dutils import *
+from movie import *
 
 gridSizeX = 25
 gridSizeY = 25
@@ -14,12 +15,12 @@ class Timeline(QWidget):
 		self.setMouseTracking(True)
 		self.movie = movie
 		self.movie.currFrame = -1
-		self.movie.currChannel = -1
-		self.resize((len(self.movie.frames) + 1) * gridSizeX + 2, (2 + 3 + 24) * gridSizeY + 2) # +2 to make edges visible
+		self.movie.currChannel = None
+		self.resize((len(self.movie.frames) + 1) * gridSizeX + 2, (2 + reservedChannelCount + channelCount) * gridSizeY + 2) # +2 to make edges visible
 		self.parent().parent().parent().selectionChanged.connect(self.selectionChanged)
 
 	def selectionChanged(self):
-		if self.movie.currFrame != -1 and self.movie.currChannel == -1:
+		if self.movie.currFrame != -1 and self.movie.currChannel == None:
 			self.parent().parent().ensureVisible((self.movie.currFrame + 1) * gridSizeX, gridSizeY, 150, 50)
 		self.update()
 
@@ -36,29 +37,34 @@ class Timeline(QWidget):
 		y = ev.y() - gridSizeY*2
 		if x < 0:
 			valid = False
+			y = None
 		if y < 0:
 			chanValid = False
-			y = -1
+			y = None
 		x = x / gridSizeX
-		y = y / gridSizeY
-		if (not valid) or x >= len(self.movie.frames) or (chanValid and y >= len(self.movie.frames[x].sprites)):
+		if y != None:
+			y = (y / gridSizeY) - reservedChannelCount + 1
+		if (not valid) or x >= len(self.movie.frames):
 			valid = False
+		elif chanValid and (y not in self.movie.frames[x].sprites):
+			chanValid = False
+			y = None
 		info = None
 		if chanValid:
 			info = self.movie.frames[x].sprites[y]
-		if (not valid) or (info and not info.enabled):
-			self.movie.currFrame = -1
-			self.movie.currChannel = -1
-		else:
-			self.movie.currFrame = x
-			self.movie.currChannel = y
+		if info and not info.enabled:
+			y = None
+		if not valid:
+			x = -1
+		self.movie.currFrame = x
+		self.movie.currChannel = y
 		self.parent().parent().parent().parent().selectionChanged.emit()
 		self.update()
 		return True
 
 	def mouseMoveEvent(self, ev):
 		x = ev.x() - gridSizeX
-		y = ev.y() - gridSizeY*2
+		y = ev.y() - gridSizeY*(2+reservedChannelCount-1)
 		if x < 0 or y < 0:
 			oldX = -1
 			QToolTip.hideText()
@@ -70,7 +76,7 @@ class Timeline(QWidget):
 			return True
 		oldX = x
 		oldY = y
-		if x >= len(self.movie.frames) or y >= len(self.movie.frames[x].sprites):
+		if x >= len(self.movie.frames) or y < 1 or y > channelCount:
 			oldX = -1
 			QToolTip.hideText()
 			return True
@@ -132,21 +138,24 @@ class Timeline(QWidget):
 			painter.drawText(xpos-gridSizeX, gridSizeY+2, gridSizeX*2, gridSizeY, Qt.AlignHCenter, str(n + 1))
 		for n in range(len(self.movie.frames)):
 			xpos = (n+1) * gridSizeX + gridSizeX/2
-			if self.movie.currFrame == n and self.movie.currChannel == -1:
+			if self.movie.currFrame == n and self.movie.currChannel == None:
 				painter.setPen(QPen("red"))
 			if n % 5 == 4:
 				painter.drawLine(xpos, gridSizeY + 17, xpos, gridSizeY*2)
 			else:
 				painter.drawLine(xpos, gridSizeY + 20, xpos, gridSizeY*2)
-			if self.movie.currFrame == n and self.movie.currChannel == -1:
+			if self.movie.currFrame == n and self.movie.currChannel == None:
 				painter.setPen(QPen("gray"))
 
-		for n in range(24):
-			ypos = gridSizeY * (2 + n)
+		painter.drawText(0, gridSizeY * 2, gridSizeX, gridSizeY, 0x82, "tmpo")
+		painter.drawText(0, gridSizeY * 3, gridSizeX, gridSizeY, 0x82, "pal")
+		painter.drawText(0, gridSizeY * 4, gridSizeX, gridSizeY, 0x82, "trns")
+		painter.drawText(0, gridSizeY * 5, gridSizeX, gridSizeY, 0x82, "snd1")
+		painter.drawText(0, gridSizeY * 6, gridSizeX, gridSizeY, 0x82, "snd2")
+		painter.drawText(0, gridSizeY * 7, gridSizeX, gridSizeY, 0x82, "scrp")
+		for n in range(channelCount):
+			ypos = gridSizeY * (2 + reservedChannelCount + n)
 			painter.drawText(0, ypos, gridSizeX, gridSizeY, Qt.AlignVCenter | Qt.AlignRight, str(n + 1))
-		painter.drawText(0, gridSizeY * (2 + 24), gridSizeX, gridSizeY, 0x82, "pal")
-		painter.drawText(0, gridSizeY * (3 + 24), gridSizeX, gridSizeY, 0x82, "snd1")
-		painter.drawText(0, gridSizeY * (4 + 24), gridSizeX, gridSizeY, 0x82, "snd2")
 
 		# grid
 		painter.setPen(QPen("darkGray"))
@@ -168,11 +177,11 @@ class Timeline(QWidget):
 		for x in range(len(self.movie.frames)):
 			xpos = (x+1) * gridSizeX
 			frame = self.movie.frames[x]
-			for y in range(len(frame.sprites)):
+			for y in frame.sprites.keys():
 				entry = frame.sprites[y]
 				if not entry.enabled:
 					continue
-				ypos = (y + 2) * gridSizeY
+				ypos = (y + 2 + reservedChannelCount - 1) * gridSizeY
 				if self.movie.currFrame == x and self.movie.currChannel == y:
 					painter.setBrush(QBrush("red", Qt.SolidPattern))
 				elif self.movie.currFrame == x:
@@ -188,13 +197,16 @@ class Timeline(QWidget):
 		for x in range(len(self.movie.frames)):
 			xpos = (x+1) * gridSizeX
 			frame = self.movie.frames[x]
-			for y in range(len(frame.sprites)):
+			for y in frame.sprites.keys():
+				if y <= 0:
+					continue # TODO
 				entry = frame.sprites[y]
 				oldEntry = None
 				if y in seenEntries:
 					oldEntry = seenEntries[y]
-				seenEntries[y] = entry.castId
-				ypos = (y + 2) * gridSizeY
+				if y > 0:
+					seenEntries[y] = entry.castId
+				ypos = (y + 2 + reservedChannelCount - 1) * gridSizeY
 				if oldEntry and (not entry.enabled or entry.castId != oldEntry):
 					# draw a line at the end of the OLD one
 					painter.setPen(QPen("gray"))
