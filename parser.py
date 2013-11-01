@@ -65,7 +65,7 @@ class DirectorParser:
 			pass # FIXME
 		if 'STXT' in resources:
 			for i in resources['STXT']:
-				pass # FIXME
+				self.parseText(i)
 		# FIXME: stupid hack for dibs
 		self.movie.dibs = {}
 		if 'DIB ' in resources:
@@ -366,6 +366,13 @@ class DirectorParser:
 		print
 		# last entry is just a terminator
 		assert labels[-1][0] == 0
+
+	def parseText(self, data):
+		unk1 = read32(data)
+		assert unk1 == 12 # i.e. after header
+		strLen = read32(data)
+		dataLen = read32(data)
+		print 'text %d: ' % data.rid + repr(data.read(strLen)) + ", " + repr(data.read(dataLen))
 
 def parseFile(filename):
 	myfile = open(filename)
