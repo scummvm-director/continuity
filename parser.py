@@ -150,18 +150,27 @@ class DirectorParser:
 		frame.actionId = read8(data)
 		if frame.actionId:
 			frame.sprites[movie.scriptChannel] = movie.Sprite()
-		frame.unk1 = read8(data)
+		frame.soundType1 = read8(data) # type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
 		frame.transFlags = read8(data)
 		frame.transData1 = read8(data)
 		frame.tempo = read8(data)
 		if frame.tempo:
 			frame.sprites[movie.tempoChannel] = movie.Sprite()
 		frame.transData2 = read8(data)
-		frame.sound = read16(data)
-		if frame.sound:
+		frame.sound1 = read16(data)
+		if frame.sound1:
 			frame.sprites[movie.soundChannel1] = movie.Sprite()
-		print "action %d, unk 0x%02x, trans %d (%d/%d), tempo %d, sound %d," % (frame.actionId, frame.unk1, frame.transFlags, frame.transData1, frame.transData2, frame.tempo, frame.sound),
-		print "unk %s," % hexify(data.read(8)),
+		print "action %d, unk trans %d (%d/%d), tempo %d, sound %d (%02x)," % (frame.actionId, frame.transFlags, frame.transData1, frame.transData2, frame.tempo, frame.sound1, frame.soundType1),
+		print "unk %s," % hexify(data.read(3)),
+		frame.skipFrameFlags = read8(data)
+		print "skip frame flags %d," % frame.skipFrameFlags # 3 = on, 2 = off
+		frame.blend = read8(data)
+		print "blend %d," % frame.blend,
+		frame.sound2 = read16(data)
+		frame.soundType2 = read8(data)
+		if frame.sound2:
+			frame.sprites[movie.soundChannel2] = movie.Sprite()
+		print "sound2 %d (%02x)" % (frame.sound2, frame.soundType2),
 		print
 		# palette:
 		frame.palette = read16(data)
