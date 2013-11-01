@@ -167,12 +167,13 @@ class DirectorParser:
 		frame.palette = read16(data)
 		if frame.palette:
 			frame.sprites[movie.paletteChannel] = movie.Sprite()
-		print " palette %d:" % frame.palette,
-		print "unk %s," % hexify(data.read(2))
-		print read8(data), # palette data1
-		print read8(data), # palette data2
-		print read16(data), # palette id 2
-		print read16(data),
+		frame.paletteFirstColor = read8(data) # for cycles. note: these start at 0x80 (for pal entry 0)!
+		frame.paletteLastColor = read8(data)
+		frame.paletteFlags = read8(data)
+		frame.paletteSpeed = read8(data)
+		frame.paletteFrameCount = read16(data) # for 'over time'
+		frame.paletteCycleCount = read16(data)
+		print " palette %d: cycle %d-%d, flags %02x, speed %d, %d frames, %d cycles" % (frame.palette, frame.paletteFirstColor, frame.paletteLastColor, frame.paletteFlags, frame.paletteSpeed, frame.paletteFrameCount, frame.paletteCycleCount)
 		print "unk %s," % hexify(data.read(6)),
 		print
 		# cast:
