@@ -47,7 +47,7 @@ class MyMainWindow(QMainWindow):
 			item.addChild(QTreeWidgetItem(["Created By", movie.createdBy]))
 			item.addChild(QTreeWidgetItem(["Changed By", movie.changedBy]))
 			scItem = QTreeWidgetItem(["Script", movie.script])
-			scItem.setToolTip(1, movie.script.replace("\r", "<br>").replace(" ", "&nbsp;"))
+			scItem.setToolTip(1, "<p>"+movie.script.replace("\r", "<br>").replace(" ", "&nbsp;"))
 			item.addChild(scItem)
 			whenLoadCastNames = {0:"When Needed", 1:"After Frame One", 2:"Before Frame One"}
 			item.addChild(QTreeWidgetItem(["Load Cast", whenLoadCastNames[movie.whenLoadCast]]))
@@ -85,7 +85,7 @@ class MyMainWindow(QMainWindow):
 			if myId in movie.castInfo:
 				item.addChild(QTreeWidgetItem(["Name", movie.castInfo[myId].name]))
 				scItem = QTreeWidgetItem(["Script", movie.castInfo[myId].script])
-				scItem.setToolTip(1, movie.castInfo[myId].script.replace("\r", "<br>").replace(" ", "&nbsp;"))
+				scItem.setToolTip(1, "<p>"+movie.castInfo[myId].script.replace("\r", "<br>").replace(" ", "&nbsp;"))
 				item.addChild(scItem)
 				item.addChild(QTreeWidgetItem(["Filename", movie.castInfo[myId].extFilename]))
 				item.addChild(QTreeWidgetItem(["Directory", movie.castInfo[myId].extDirectory]))
@@ -97,7 +97,7 @@ class MyMainWindow(QMainWindow):
 			item = QTreeWidgetItem(["Frame Action", ""])
 			text = movie.actions[frame.actionId].script
 			scItem = QTreeWidgetItem(["Script", text])
-			scItem.setToolTip(1, text.replace("\r", "<br>").replace(" ", "&nbsp;"))
+			scItem.setToolTip(1, "<p>"+text.replace("\r", "<br>").replace(" ", "&nbsp;"))
 			item.addChild(scItem)
 		if item:
 			self.info.addTopLevelItem(item)
