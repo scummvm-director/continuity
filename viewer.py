@@ -99,6 +99,70 @@ class MyMainWindow(QMainWindow):
 			scItem = QTreeWidgetItem(["Script", text])
 			scItem.setToolTip(1, "<p>"+text.replace("\r", "<br>").replace(" ", "&nbsp;"))
 			item.addChild(scItem)
+		elif movie.currChannel == transitionChannel:
+			item = QTreeWidgetItem(["Transition", ""])
+			# from puppetTransition docs
+			transTypes = {
+				1:"wipe right",
+				2:"wipe left",
+				3:"wipe down",
+				4:"wipe up",
+				5:"center out, horizontal",
+				6:"edges in, horizontal",
+				7:"center out, vertical",
+				8:"edges in, vertical",
+				9:"center out, square",
+				10:"edges in, square",
+				11:"push left",
+				12:"push right",
+				13:"push down",
+				14:"push up",
+				15:"reveal up",
+				16:"reveal up, right",
+				17:"reveal right",
+				18:"reveal down",
+				19:"reveal down, right",
+				20:"reveal down, left",
+				21:"reveal left",
+				22:"reveal up, left",
+				23:"dissolve, pixels fast",
+				24:"dissolve, boxy rects",
+				25:"dissolve, boxy squares",
+				26:"dissolve, patterns",
+				27:"random rows",
+				28:"random columns",
+				29:"cover down",
+				30:"cover down, left",
+				31:"cover down, right",
+				32:"cover left",
+				33:"cover right",
+				34:"cover up",
+				35:"cover up, left",
+				36:"cover up, right",
+				37:"venetian blinds",
+				38:"checkerboard",
+				39:"strips on bottom, build left",
+				40:"strips on bittom, build right",
+				41:"strips on left, build down",
+				42:"strips on left, build up",
+				43:"strips on right, build down",
+				44:"strips on right, build up",
+				45:"strips on top, build left",
+				46:"strips on top, build right",
+				47:"zoom open",
+				48:"zoom close",
+				49:"vertical binds",
+				50:"dissolve, bits fast",
+				51:"dissolve, pixels",
+				52:"dissolve, bits"
+			}
+			item.addChild(QTreeWidgetItem(["Type", transTypes[frame.transType]]))
+			item.addChild(QTreeWidgetItem(["Duration", str(frame.transFlags & 0x7f)]))
+			item.addChild(QTreeWidgetItem(["Chunk Size", str(frame.transChunkSize)]))
+			if frame.transFlags & 0x80:
+				item.addChild(QTreeWidgetItem(["Area", "Whole Stage"]))
+			else:
+				item.addChild(QTreeWidgetItem(["Area", "Changing Area"]))
 		elif movie.currChannel == paletteChannel:
 			item = QTreeWidgetItem(["Palette", ""])
 			item.addChild(QTreeWidgetItem(["Palette ID", str(frame.palette)]))

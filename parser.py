@@ -151,16 +151,18 @@ class DirectorParser:
 		if frame.actionId:
 			frame.sprites[movie.scriptChannel] = movie.Sprite()
 		frame.soundType1 = read8(data) # type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
-		frame.transFlags = read8(data)
-		frame.transData1 = read8(data)
+		frame.transFlags = read8(data) # 0x80 is whole stage (vs changed area), rest is duration in 1/4ths of a second
+		frame.transChunkSize = read8(data)
 		frame.tempo = read8(data)
 		if frame.tempo:
 			frame.sprites[movie.tempoChannel] = movie.Sprite()
-		frame.transData2 = read8(data)
+		frame.transType = read8(data)
+		if frame.transType:
+			frame.sprites[movie.transitionChannel] = movie.Sprite()
 		frame.sound1 = read16(data)
 		if frame.sound1:
 			frame.sprites[movie.soundChannel1] = movie.Sprite()
-		print "action %d, unk trans %d (%d/%d), tempo %d, sound %d (%02x)," % (frame.actionId, frame.transFlags, frame.transData1, frame.transData2, frame.tempo, frame.sound1, frame.soundType1),
+		print "action %d, unk trans %d (%d/%d), tempo %d, sound %d (%02x)," % (frame.actionId, frame.transFlags, frame.transChunkSize, frame.transType, frame.tempo, frame.sound1, frame.soundType1),
 		print "unk %s," % hexify(data.read(3)),
 		frame.skipFrameFlags = read8(data)
 		print "skip frame flags %d," % frame.skipFrameFlags # 3 = on, 2 = off
