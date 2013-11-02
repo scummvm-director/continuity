@@ -7,6 +7,18 @@ soundChannel1 = -2
 soundChannel2 = -1
 scriptChannel = 0
 
+castBitmap = 1
+castFilmLoop = 2
+castText = 3
+castPalette = 4
+castPicture = 5
+castSound = 6
+castButton = 7
+castShape = 8
+castMovie = 9
+castDigitalVideo = 10
+castScript = 11
+
 class Movie:
 	def __init__(self):
 		self.castInfo = {}

@@ -4,18 +4,6 @@ from riffarchive import *
 from resourcefork import *
 import movie
 
-CastBitmap = 1
-CastFilmLoop = 2
-CastText = 3
-CastPalette = 4
-CastPicture = 5
-CastSound = 6
-CastButton = 7
-CastShape = 8
-CastMovie = 9
-CastDigitalVideo = 10
-CastScript = 11
-
 def hexify(data):
 	s = ""
 	allzeros = True
@@ -223,7 +211,7 @@ class DirectorParser:
 				entry = movie.CastMember()
 				entry.castType = read8(data)
 				entrySize = entrySize - 1
-				if entry.castType == 1:
+				if entry.castType == movie.castBitmap:
 					flags = read8(data)
 					someFlaggyThing = read16(data)
 					entry.initialRect = readRect(data)
@@ -237,6 +225,36 @@ class DirectorParser:
 						u8 = read16(data)
 						entrySize = entrySize - 4
 					assert entrySize == 0
+				elif entry.castType == movie.castText or entry.castType == movie.castButton:
+					flags = read8(data)
+					entry.borderSize = read8(data)
+					entry.gutterSize = read8(data)
+					entry.boxShadow = read8(data)
+					entry.textType = read8(data)
+					entry.textAlign = read16(data, True)
+					palInfo = data.read(6) # ??? unused?
+					unk1 = data.read(4) # TODO: always zeros?
+					entry.initialRect = readRect(data)
+					entry.textShadow = read8(data)
+					entry.textFlags = read8(data)
+					unk2 = read16(data) # TODO: always 12?
+					entrySize = entrySize - 29
+					if entry.castType == 7:
+						entry.buttonType = read16(data)
+						entrySize = entrySize - 2
+					assert entrySize == 0
+				elif entry.castType == movie.castShape:
+					flags = read8(data)
+					unk1 = read8(data)
+					entry.shapeType = read8(data)
+					entry.initialRect = readRect(data)
+					entry.pattern = read16(data)
+					entry.fgCol = read8(data)
+					entry.bgCol = read8(data)
+					entry.fillType = read8(data)
+					entry.lineThickness = read8(data)
+					entry.lineDirection = read8(data)
+					entrySize = entrySize - 18
 				assert entrySize >= 0
 				entryData = data.read(entrySize)
 				self.movie.cast[currId] = entry

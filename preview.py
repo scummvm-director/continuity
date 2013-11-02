@@ -78,8 +78,11 @@ class Preview(QWidget):
 			painter.setPen(pen)
 			painter.setBackgroundMode(Qt.OpaqueMode)
 			castinfo = self.movie.cast[info.castId]
-			offx = info.x + castinfo.initialRect.left - castinfo.regX
-			offy = info.y + castinfo.initialRect.top - castinfo.regY
+			offx = info.x
+			offy = info.y
+			if castinfo.castType == castBitmap:
+				offx = offx + castinfo.initialRect.left - castinfo.regX
+				offy = offy + castinfo.initialRect.top - castinfo.regY
 			painter.drawRect(offx, offy, info.width, info.height)
 
 		return True

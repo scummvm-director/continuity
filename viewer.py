@@ -71,10 +71,12 @@ class MyMainWindow(QMainWindow):
 		self.info.addTopLevelItem(item)
 		self.info.expandItem(item)
 		item = None
+		citem = None
 		if movie.currChannel > 0 or movie.currChannel == soundChannel1 or movie.currChannel == soundChannel2:
 			item = QTreeWidgetItem(["Cast Member", ""])
 			item.addChild(QTreeWidgetItem(["Cast ID", str(info.castId)]))
-			castType = movie.cast[info.castId].castType
+			castentry = movie.cast[info.castId]
+			castType = castentry.castType
 			castTypeNames = {1:"Bitmap",2:"FilmLoop",3:"Text",4:"Palette",5:"Picture",6:"Sound",7:"Button",8:"Shape",9:"Movie",10:"DigitalVideo",11:"Script"}
 			if castType in castTypeNames:
 				typeName = castTypeNames[castType]
@@ -90,6 +92,40 @@ class MyMainWindow(QMainWindow):
 				item.addChild(QTreeWidgetItem(["Filename", movie.castInfo[myId].extFilename]))
 				item.addChild(QTreeWidgetItem(["Directory", movie.castInfo[myId].extDirectory]))
 				item.addChild(QTreeWidgetItem(["Resource Type", movie.castInfo[myId].extType]))
+			if castType == castText or castType == castButton:
+				citem = QTreeWidgetItem([typeName, ""])
+				sizeNames = ["None","Smallest","Small","Medium","Large","Largest"]
+				citem.addChild(QTreeWidgetItem(["Border Size", sizeNames[castentry.borderSize]]))
+				citem.addChild(QTreeWidgetItem(["Gutter Size", sizeNames[castentry.gutterSize/2]]))
+				citem.addChild(QTreeWidgetItem(["Shadow Size", sizeNames[castentry.boxShadow/2]]))
+				citem.addChild(QTreeWidgetItem(["Text Shadow", sizeNames[castentry.textShadow]]))
+				if castType == castText:
+					textFlags = []
+					if castentry.textFlags & 0x1:
+						textFlags.append("Editable")
+					if castentry.textFlags & 0x2:
+						textFlags.append("Auto-tab")
+					if castentry.textFlags & 0x4:
+						textFlags.append("Don't wrap")
+					citem.addChild(QTreeWidgetItem(["Text Flags", ", ".join(textFlags)]))
+					textTypes = {0:"Adjust to fit",1:"Scrolling",2:"Fixed"}
+					citem.addChild(QTreeWidgetItem(["Text Type", textTypes[castentry.textType]]))
+				elif castType == castButton:
+					buttonTypes = {1:"Button",2:"Checkbox",3:"Radio"}
+					citem.addChild(QTreeWidgetItem(["Button Type", buttonTypes[castentry.buttonType]]))
+				alignTypes = {0:"Left",1:"Center",-1:"Right"}
+				citem.addChild(QTreeWidgetItem(["Text Align", alignTypes[castentry.textAlign]]))
+			elif castType == castShape:
+				citem = QTreeWidgetItem([typeName, ""])
+				shapeTypes = {1:"Rectangle", 2:"Round Rect", 3:"Oval", 4:"Line"}
+				citem.addChild(QTreeWidgetItem(["Shape Type", shapeTypes[castentry.shapeType]]))
+				citem.addChild(QTreeWidgetItem(["Pattern ID", str(castentry.pattern)]))
+				citem.addChild(QTreeWidgetItem(["Foreground Color", str((castentry.fgCol - 0x80) % 256)]))
+				citem.addChild(QTreeWidgetItem(["Background Color", str((castentry.bgCol - 0x80) % 256)]))
+				fillTypes = {0:"Unfilled",1:"Filled"} # ??
+				citem.addChild(QTreeWidgetItem(["Fill Type", fillTypes[castentry.fillType]]))
+				citem.addChild(QTreeWidgetItem(["Line Thickness", str(castentry.lineThickness)]))
+				citem.addChild(QTreeWidgetItem(["Line Direction?", str(castentry.lineDirection)])) # 5 is default (down/right), 6 is down/left??
 		elif movie.currChannel == tempoChannel:
 			item = QTreeWidgetItem(["Tempo", ""])
 			if frame.tempo <= 60:
@@ -197,6 +233,9 @@ class MyMainWindow(QMainWindow):
 		if item:
 			self.info.addTopLevelItem(item)
 			self.info.expandItem(item)
+		if citem:
+			item.addChild(citem)
+			self.info.expandItem(citem)
 		if movie.currChannel > 0:
 			item = QTreeWidgetItem(["Sprite", ""])
 			if info.height:
