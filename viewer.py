@@ -97,7 +97,7 @@ class MyMainWindow(QMainWindow):
 			elif frame.tempo >= 161:
 				item.addChild(QTreeWidgetItem(["Delay", str(256 - frame.tempo)]))
 			elif frame.tempo >= 136:
-				item.addChild(QTreeWidgetItem(["Wait For", "Channel " + str(frame.tempo - 136)]))
+				item.addChild(QTreeWidgetItem(["Wait For", "Channel " + str(frame.tempo - 135)]))
 			elif frame.tempo == 128:
 				item.addChild(QTreeWidgetItem(["Wait For", "Click/Key"]))
 			elif frame.tempo == 135:
