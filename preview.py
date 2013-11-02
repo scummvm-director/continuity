@@ -21,8 +21,9 @@ class Preview(QWidget):
 		painter = QPainter(self)
 
 		palette = getPaletteFor(self.movie.currFrame, self.movie)
-		bgcol = (self.movie.stageColor ^ 0xff) & (2**self.movie.colorDepth - 1)
-		painter.setBrush(QBrush(QColor(ord(palette[4*bgcol+2]), ord(palette[4*bgcol+1]), ord(palette[4*bgcol]))))
+		bgcol = self.movie.stageColor & (2**self.movie.colorDepth - 1)
+		if bgcol < len(palette)/4: # TODO: ??
+			painter.setBrush(QBrush(QColor(ord(palette[4*bgcol+2]), ord(palette[4*bgcol+1]), ord(palette[4*bgcol]))))
 		painter.drawRect(0, 0, self.movie.movieRect.width(), self.movie.movieRect.height())
 		painter.setBrush(QBrush())
 
