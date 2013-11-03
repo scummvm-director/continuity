@@ -27,7 +27,12 @@ def getString(s):
 	if len(s) == 0:
 		return s
 	l = ord(s[0])
+	if l == 0:
+		assert len(s) == 1
+		return ""
 	s = s[1:]
+	if s[-1] == '\x00':
+		s = s[:-1]
 	assert l == len(s)
 	return s
 
