@@ -32,8 +32,11 @@ class DirectorParser:
 			self.parseMacName(resources['MCNM'][0])
 		assert 'VWCF' in resources
 		self.parseMovieConfig(resources['VWCF'][0])
-		assert 'VWCR' in resources
-		self.parseMovieCastRecord(resources['VWCR'][0])
+		if myfile.version < 0xf000:
+			assert 'VWCR' in resources
+			self.parseMovieCastRecord(resources['VWCR'][0])
+		else:
+			pass # FIXME
 		if 'VWCI' in resources:
 			for i in resources['VWCI']:
 				self.parseCastInfo(i)
@@ -98,8 +101,28 @@ class DirectorParser:
 		size = read32(data)
 		assert size == data.size
 		size = size - 4
+		if self.myfile.version >= 0xf000:
+			unk1 = read32(data)
+			assert unk1 == 0x14
+			unk2 = read32(data)
+			assert unk2 == 0
+			unk3 = read16(data)
+			assert unk3 == 4
+			unk4 = read16(data)
+			assert unk4 == 0x14
+			unk5 = read16(data)
+			assert unk5 == 0x32
+			unk6 = read16(data)
+			assert unk6 == 0x100
+			size = size - 16
+
 		frameId = 0
-		scoreData = bytearray('\x00' * 16 * 26)
+		frameSize = 16
+		if self.myfile.version >= 0xf000:
+			frameSize = 20
+		# FIXME: probably bad (like this since d3 frames are 16*26)
+		scoreData = bytearray('\x00' * frameSize * 26)
+
 		while size:
 			frameId = frameId + 1
 			frameSize = read16(data)
@@ -111,11 +134,16 @@ class DirectorParser:
 			assert frameSize >= 2
 			frameSize = frameSize - 2
 			while frameSize:
-				assert frameSize >= 2
-				frameSize = frameSize - 2
-
-				channelSize = read8(data) * 2
-				channelOffset = read8(data) * 2
+				if self.myfile.version < 0xf000:
+					assert frameSize >= 2
+					frameSize = frameSize - 2
+					channelSize = read8(data) * 2
+					channelOffset = read8(data) * 2
+				else:
+					assert frameSize >= 4
+					frameSize = frameSize - 4
+					channelSize = read16(data)
+					channelOffset = read16(data)
 
 				assert channelSize <= frameSize
 				frameSize = frameSize - channelSize
@@ -152,13 +180,18 @@ class DirectorParser:
 			frame.sprites[movie.soundChannel1] = movie.Sprite()
 			frame.sprites[movie.soundChannel1].castId = frame.sound1
 		print "action %d, trans %d/%d:%d, tempo %d, sound %d (%02x)," % (frame.actionId, frame.transFlags, frame.transChunkSize, frame.transType, frame.tempo, frame.sound1, frame.soundType1),
-		print "unk %s," % hexify(data.read(3)),
+		if self.myfile.version < 0xf000:
+			print "unk %s," % hexify(data.read(3)),
+		else:
+			frame.sound2 = read16(data)
+			frame.soundType2 = read8(data)
 		frame.skipFrameFlags = read8(data)
 		print "skip frame flags %d," % frame.skipFrameFlags # 3 = on, 2 = off
 		frame.blend = read8(data)
 		print "blend %d," % frame.blend,
-		frame.sound2 = read16(data)
-		frame.soundType2 = read8(data)
+		if self.myfile.version < 0xf000:
+			frame.sound2 = read16(data)
+			frame.soundType2 = read8(data)
 		if frame.sound2:
 			frame.sprites[movie.soundChannel2] = movie.Sprite()
 			frame.sprites[movie.soundChannel2].castId = frame.sound2
@@ -176,6 +209,8 @@ class DirectorParser:
 		frame.paletteCycleCount = read16(data)
 		print " palette %d: cycle %d-%d, flags %02x, speed %d, %d frames, %d cycles" % (frame.palette, frame.paletteFirstColor, frame.paletteLastColor, frame.paletteFlags, frame.paletteSpeed, frame.paletteFrameCount, frame.paletteCycleCount)
 		print "unk %s," % hexify(data.read(6)),
+		if self.myfile.version >= 0xf000:
+			print "unk2 %s, " % hexify(data.read(11))
 		print
 		# cast:
 		print " sprites:",
@@ -190,8 +225,14 @@ class DirectorParser:
 			entry.x = read16(data,True)
 			entry.height = read16(data,True)
 			entry.width = read16(data,True)
+			x3 = ""
 			frame.sprites[i+1] = entry
-			print "%03d(%d)[%s,%s,%04x]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags),
+			print "%03d(%d)[%s,%s,%04x,%d/%d/%d/%d]," % (entry.castId, entry.enabled, hexify(x1), hexify(x2), entry.flags, entry.x, entry.y, entry.width, entry.height),
+			if self.myfile.version >= 0xf000:
+				scriptId = read16(data)
+				flags2 = read8(data) # 0x40 editable, 0x80 moveable
+				unk2 = read8(data)
+				print "[%04x,%02x,%02x]"  % (scriptId, flags2, unk2),
 		print
 		return frame
 
@@ -307,12 +348,13 @@ class DirectorParser:
 		self.movie.changedBy = getString(ss[1])
 		self.movie.createdBy = getString(ss[2])
 		self.movie.flags = flags
-		assert ss[3] == ""
+		self.movie.directory = getString(ss[3]) # v4?
 		assert len(ss[4]) == 2
 		self.movie.whenLoadCast = struct.unpack(">H", ss[4])[0]
 		assert self.movie.whenLoadCast in [0,1,2]
-		assert ss[5] == ""
-		assert ss[6] == ""
+		if len(ss) > 5: # v3
+			assert ss[5] == ""
+			assert ss[6] == ""
 		print 'VWFI data', ss,hex(unk2),hex(unk3),hex(flags)
 
 	def parseMacName(self, data):
@@ -333,6 +375,8 @@ class DirectorParser:
 			assert self.versionMinor < 0x100
 
 	def parseFontMap(self, data):
+		if data.size == 0: # v4 moved this into a text file
+			return
 		count = read16(data)
 		fontmaps = []
 		for i in range(count):
