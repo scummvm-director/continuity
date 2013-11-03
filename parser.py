@@ -394,10 +394,15 @@ class DirectorParser:
 
 def parseFile(filename):
 	myfile = open(filename)
+	hdr = myfile.read(4)
+	myfile.seek(0)
 	d = DirectorParser()
-	if ("mmm" in filename) or ("MMM" in filename):
+	if hdr == "RIFF":
 		a = RiffArchive(myfile)
 		d.mac = False
+		movie = d.parse(a, a.resources)
+	elif hdr == "RIFX":
+		a = RIFXArchive(myfile)
 		movie = d.parse(a, a.resources)
 	else:
 		a = ResourceFork(myfile)
