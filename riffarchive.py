@@ -182,18 +182,21 @@ class RIFXArchive:
 			tag = keydata.read(4)
 			assert entries[n].tag == tag
 			entries[n].rid = rid
-			print "res %d (%s): %d" % (n, tag, rid)
+			#print "res %d (%s): %d" % (n, tag, rid)
 
 		if 'CAS*' in self.resources:
 			assert len(self.resources['CAS*']) == 1
 			cas = self.resources['CAS*'][0]
 			casdata = cas.read(f)
 			cast = self.resources['CASt']
-			assert casdata.size == len(cast)*4
-			for n in range(len(cast)):
+			# this can be larger or smaller than the number of cast members (?!)
+			#assert casdata.size >= len(cast)*4
+			for n in range(casdata.size/4):
 				castId = read32(casdata)
+				if castId == 0:
+					continue
 				assert entries[castId].tag == 'CASt'
-				cast[n].rid = cas.rid + n + 1 # FIXME
+				entries[castId].rid = cas.rid + n + 1
 		else:
 			assert not ('CASt' in self.resources)
 
