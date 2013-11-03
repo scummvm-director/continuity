@@ -35,11 +35,12 @@ class DirectorParser:
 		if myfile.version < 0xf000:
 			assert 'VWCR' in resources
 			self.parseMovieCastRecord(resources['VWCR'][0])
-		else:
-			pass # FIXME
 		if 'VWCI' in resources:
 			for i in resources['VWCI']:
 				self.parseCastInfo(i)
+		if 'CASt' in resources:
+			for i in resources['CASt']:
+				self.parseCastData(i)
 		if 'VWSC' in resources:
 			self.parseScore(resources['VWSC'][0])
 		if 'VWTC' in resources:
@@ -306,12 +307,17 @@ class DirectorParser:
 					print "  unk %04x %04x" % (u7, u8)
 			currId = currId + 1
 
-	def parseSubstrings(self, data):
-		ci_offset = read32(data)
-		unk2 = read32(data) # not int!
-		unk3 = read32(data) # not int!
-		entryType = read32(data)
-		data.seek(ci_offset)
+	def parseSubstrings(self, data, hasHeader=True):
+		if hasHeader:
+			ci_offset = read32(data)
+			unk2 = read32(data) # not int!
+			unk3 = read32(data) # not int!
+			entryType = read32(data)
+			data.seek(ci_offset)
+		else:
+			unk2 = 0
+			unk3 = 0
+			entryType = 0
 
 		count = read16(data) + 1
 		entries = []
@@ -328,6 +334,7 @@ class DirectorParser:
 		return (strings, unk2, unk3, entryType)
 
 	def parseCastInfo(self, data):
+		# d3 variant
 		entry = movie.CastInfo()
 		strings, unk2, unk3, entryType = self.parseSubstrings(data)
 		assert len(strings) == 5
@@ -342,13 +349,47 @@ class DirectorParser:
 			print " file %s/%s(%s)" % (repr(entry.extDirectory), repr(entry.extFilename), repr(entry.extType))
 		self.movie.castInfo[data.rid] = entry
 
+	def parseCastData(self, data):
+		# d4+ variant
+		if data.size == 0:
+			return
+		if data.size < 26:
+			# FIXME: wtf?
+			return
+
+		info = movie.CastInfo()
+		member = movie.CastMember()
+		self.movie.cast[data.rid - 1024] = member
+
+		size1 = read16(data)
+		size2 = read32(data)
+		member.castType = read8(data)
+		blob = data.read(3)
+		member.initialRect = readRect(data)
+		member.boundingRect = readRect(data)
+		member.regX = 0 # FIXME: HACK
+		member.regY = 0 # FIXME: HACK
+		print "%04x: cast type 0x%02x:" % (data.rid, member.castType), hexify(blob), ",",
+		print hexify(data.read(size1)),
+		if size2:
+			strings = self.parseSubstrings(data, False)[0]
+			print strings
+			strings.extend([""]*5) # FIXME: HACK
+			info.script = strings[0]
+			info.name = getString(strings[1])
+			info.extDirectory = getString(strings[2])
+			info.extFilename = getString(strings[3])
+			info.extType = strings[4]
+
+			self.movie.castInfo[data.rid] = info
+
 	def parseFileInfo(self, data):
 		ss,unk2,unk3,flags = self.parseSubstrings(data)
 		self.movie.script = ss[0]
 		self.movie.changedBy = getString(ss[1])
 		self.movie.createdBy = getString(ss[2])
 		self.movie.flags = flags
-		self.movie.directory = getString(ss[3]) # v4?
+		self.movie.directory = getString(ss[3]) # d4+
 		assert len(ss[4]) == 2
 		self.movie.whenLoadCast = struct.unpack(">H", ss[4])[0]
 		assert self.movie.whenLoadCast in [0,1,2]
