@@ -51,6 +51,12 @@ class DirectorParser:
 			self.parseActions(resources['VWAC'][0])
 		if 'VWFI' in resources:
 			self.parseFileInfo(resources['VWFI'][0])
+		else:
+			self.movie.script = ""
+			self.movie.changedBy = ""
+			self.movie.createdBy = ""
+			self.movie.flags = 0
+			self.movie.whenLoadCast = -1
 		if 'VWFM' in resources:
 			self.parseFontMap(resources['VWFM'][0])
 		if 'VWTL' in resources:

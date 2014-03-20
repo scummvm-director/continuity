@@ -49,7 +49,8 @@ class MyMainWindow(QMainWindow):
 			scItem = QTreeWidgetItem(["Script", movie.script])
 			scItem.setToolTip(1, "<p>"+movie.script.replace("\r", "<br>").replace(" ", "&nbsp;"))
 			item.addChild(scItem)
-			whenLoadCastNames = {0:"When Needed", 1:"After Frame One", 2:"Before Frame One"}
+			# unknown == no VWFI available
+			whenLoadCastNames = {-1:"Unknown",0:"When Needed", 1:"After Frame One", 2:"Before Frame One"}
 			item.addChild(QTreeWidgetItem(["Load Cast", whenLoadCastNames[movie.whenLoadCast]]))
 			flags = []
 			if movie.flags & 0x20:
