@@ -54,6 +54,25 @@ def readRect(f):
 	r.right = read16(f,True)
 	return r
 
+def unPackBits(data):
+	output = ""
+	pos = 0
+	while pos < len(data):
+		n = ord(data[pos])
+		pos = pos + 1
+		if n < 0x80:
+			# literal run
+			output = output + data[pos:pos+n+1]
+			pos = pos + n + 1
+		elif n > 0x80:
+			# run length
+			output = output + data[pos] * (0x100 - n + 1)
+			pos = pos + 1
+		else:
+			# no-op
+			pass
+	return output
+
 def getPaletteFor(pos, movie):
 	palentries = 256
 	palette = ""
@@ -68,7 +87,9 @@ def getPaletteFor(pos, movie):
 				d = p.read()
 				for i in range(len(d)/6):
 					l = len(d)/6
-					n = l - i - 1
+					n = i
+					if not movie.mac:
+						n = l - i - 1
 					if i >= palentries:
 						break
 					palette = palette + d[n*6+4] + d[n*6+2] + d[n*6] + '\x00'
@@ -110,14 +131,14 @@ def imageFromDIB(data, palette):
 			data = data[:8] + struct.pack("<i", -height) + data[12:]
 		# 1bpp handled differently: word padding, so we have to expand to dword padding
 		oldrawdata = rawdata
-		rawdata = ""
+		rawdata = bytearray()
 		realwidth = ((width+7)/8)
 		realwidth = ((realwidth+1)/2)*2
 		neededwidth = ((realwidth+3)/4)*4
 		for n in range(height):
-			rawdata = rawdata + oldrawdata[n*realwidth:n*realwidth+realwidth] + '\x00' * (neededwidth - realwidth)
+			rawdata.extend(bytearray(oldrawdata[n*realwidth:n*realwidth+realwidth] + '\x00' * (neededwidth - realwidth)))
 	dibdata = "BM" + struct.pack("<III", totalsize, 0, offset) + data[:40] + palette + rawdata
 
-	return dibdata
+	return str(dibdata)
 
 

@@ -19,8 +19,17 @@ def hexify(data):
 	return s
 
 class DirectorParser:
+	def getResourceById(self, tag, idd):
+		if not (tag in self.movie.resources):
+			return None
+		for i in self.movie.resources[tag]:
+			if i.rid == idd:
+				return i
+		return None
+
 	def parse(self, myfile, resources):
 		self.movie = movie.Movie()
+		self.movie.mac = self.mac
 		self.movie.resources = resources
 		self.myfile = myfile
 		if 'VER ' in resources:
@@ -42,15 +51,15 @@ class DirectorParser:
 			for i in resources['CASt']:
 				self.parseCastData(i)
 		if 'VWSC' in resources:
-			self.parseScore(resources['VWSC'][0])
+			self.parseScore(self.getResourceById('VWSC', 1024))
 		if 'VWTC' in resources:
 			pass # FIXME
 		if 'VWLB' in resources:
-			self.parseLabels(resources['VWLB'][0])
+			self.parseLabels(self.getResourceById('VWLB', 1024))
 		if 'VWAC' in resources:
-			self.parseActions(resources['VWAC'][0])
+			self.parseActions(self.getResourceById('VWAC', 1024))
 		if 'VWFI' in resources:
-			self.parseFileInfo(resources['VWFI'][0])
+			self.parseFileInfo(self.getResourceById('VWFI', 1024))
 		else:
 			self.movie.script = ""
 			self.movie.changedBy = ""
@@ -58,17 +67,21 @@ class DirectorParser:
 			self.movie.flags = 0
 			self.movie.whenLoadCast = -1
 		if 'VWFM' in resources:
-			self.parseFontMap(resources['VWFM'][0])
+			self.parseFontMap(self.getResourceById('VWFM', 1024))
 		if 'VWTL' in resources:
 			pass # FIXME
 		if 'STXT' in resources:
 			for i in resources['STXT']:
 				self.parseText(i)
-		# FIXME: stupid hack for dibs
+		# FIXME: stupid hack for dibs,bitmaps
 		self.movie.dibs = {}
 		if 'DIB ' in resources:
 			for i in resources['DIB ']:
 				self.movie.dibs[i.rid] = i
+		self.movie.bitmaps = {}
+		if 'BITD' in resources:
+			for i in resources['BITD']:
+				self.movie.bitmaps[i.rid] = i
 		return self.movie
 
 	def parseMovieConfig(self, data):
@@ -106,29 +119,34 @@ class DirectorParser:
 	def parseScore(self, data):
 		self.movie.frames = []
 		size = read32(data)
-		assert size == data.size
+		if self.myfile.version < 0xf000: # d3
+			assert size == data.size, (size, data.size) # FIXME: ??
 		size = size - 4
 		if self.myfile.version >= 0xf000:
 			unk1 = read32(data)
 			assert unk1 == 0x14
 			unk2 = read32(data)
-			assert unk2 == 0
+			# unk2 can be zero, the frame count, or something odd: e.g. unk2==200, frames==975
+			#assert unk2 == 0
 			unk3 = read16(data)
-			assert unk3 == 4
+			assert unk3 == 4 or unk3 == 7, unk2 # 7 is d5
 			unk4 = read16(data)
-			assert unk4 == 0x14
+			assert unk4 == 0x14 or unk4 == 0x18, unk4 # d4 is 0x14, d5 is 0x18: frame size?
 			unk5 = read16(data)
 			assert unk5 == 0x32
 			unk6 = read16(data)
-			assert unk6 == 0x100
+			assert unk6 == 0x100 or unk6 == 0, unk6 # 0 is d5
 			size = size - 16
 
 		frameId = 0
 		frameSize = 16
 		if self.myfile.version >= 0xf000:
 			frameSize = 20
+		if self.myfile.version >= 0xf4c1: # d5
+			frameSize = 24
 		# FIXME: probably bad (like this since d3 frames are 16*26)
-		scoreData = bytearray('\x00' * frameSize * 26)
+		#scoreData = bytearray('\x00' * frameSize * 26)
+		scoreData = bytearray('\x00' * frameSize * 50)
 
 		while size:
 			frameId = frameId + 1
@@ -218,6 +236,8 @@ class DirectorParser:
 		print "unk %s," % hexify(data.read(6)),
 		if self.myfile.version >= 0xf000:
 			print "unk2 %s, " % hexify(data.read(11))
+			if self.myfile.version >= 0xf4c1: # d5
+				print "unk3 %s, " % hexify(data.read(7))
 		print
 		# cast:
 		print " sprites:",
@@ -240,6 +260,8 @@ class DirectorParser:
 				flags2 = read8(data) # 0x40 editable, 0x80 moveable
 				unk2 = read8(data)
 				print "[%04x,%02x,%02x]"  % (scriptId, flags2, unk2),
+				if self.myfile.version >= 0xf4c1: # d5
+					data.read(4)
 		print
 		return frame
 
@@ -329,7 +351,7 @@ class DirectorParser:
 		entries = []
 		for i in range(count):
 			entries.append(read32(data))
-		rawdata = data.read()
+		rawdata = data.read(entries[-1])
 		assert entries[0] == 0
 		assert entries[-1] == len(rawdata)
 
@@ -367,15 +389,26 @@ class DirectorParser:
 		member = movie.CastMember()
 		self.movie.cast[data.rid - 1024] = member
 
-		size1 = read16(data)
-		size2 = read32(data)
-		member.castType = read8(data)
-		blob = data.read(3)
+		if self.myfile.version < 0xf4c1: # d4
+			size1 = read16(data)
+			size2 = read32(data)
+			size3 = 0
+			member.castType = read8(data)
+			blob = data.read(3)
+		else: # d5
+			# FIXME: only the cast type and the strings are good
+			member.castType = read32(data)
+			size2 = read32(data)
+			size3 = read32(data)
+			size1 = read32(data)
+			assert size1 == 0x14
+			size1 = 0
+			blob = ""
 		member.initialRect = readRect(data)
 		member.boundingRect = readRect(data)
 		member.regX = 0 # FIXME: HACK
 		member.regY = 0 # FIXME: HACK
-		print "%04x: cast type 0x%02x:" % (data.rid, member.castType), hexify(blob), ",",
+		print "%04x: cast type 0x%02x:" % (data.rid, member.castType), str(member.initialRect), str(member.boundingRect), hexify(blob), ",",
 		print hexify(data.read(size1)),
 		if size2:
 			strings = self.parseSubstrings(data, False)[0]
@@ -388,6 +421,8 @@ class DirectorParser:
 			info.extType = strings[4]
 
 			self.movie.castInfo[data.rid] = info
+		if size3:
+			print hexify(data.read(size3))
 
 	def parseFileInfo(self, data):
 		ss,unk2,unk3,flags = self.parseSubstrings(data)
@@ -396,12 +431,20 @@ class DirectorParser:
 		self.movie.createdBy = getString(ss[2])
 		self.movie.flags = flags
 		self.movie.directory = getString(ss[3]) # d4+
-		assert len(ss[4]) == 2
-		self.movie.whenLoadCast = struct.unpack(">H", ss[4])[0]
-		assert self.movie.whenLoadCast in [0,1,2]
-		if len(ss) > 5: # v3
+		if ss[4]:
+			assert len(ss[4]) == 2
+			self.movie.whenLoadCast = struct.unpack(">H", ss[4])[0]
+			assert self.movie.whenLoadCast in [0,1,2]
+		else:
+			self.movie.whenLoadCast = None
+		if self.myfile.version < 0xf4c1 and len(ss) == 7: # d3/d4
 			assert ss[5] == ""
 			assert ss[6] == ""
+		elif len(ss) == 5: # d4?
+			pass
+		else: # some d5?
+			# TODO: three uint16s in ss[5]/ss[6]/ss[7]
+			pass
 		print 'VWFI data', ss,hex(unk2),hex(unk3),hex(flags)
 
 	def parseMacName(self, data):
@@ -494,6 +537,7 @@ def parseFile(filename):
 		movie = d.parse(a, a.resources)
 	elif hdr == "RIFX":
 		a = RIFXArchive(myfile)
+		d.mac = True
 		movie = d.parse(a, a.resources)
 	else:
 		a = ResourceFork(myfile)
